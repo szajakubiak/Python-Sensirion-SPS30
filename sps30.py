@@ -99,5 +99,31 @@ class SPS30:
         serial_number = raw[5:-3].decode('ascii')
         return serial_number
 
+    def read_firmware_version(self):
+        self.ser.flushInput()
+        self.ser.write([0x7E, 0x00, 0xD1, 0x00, 0x2E, 0x7E])
+        toRead = self.ser.inWaiting()
+        while toRead < 7:
+            toRead = self.ser.inWaiting()
+            time.sleep(0.1)
+        raw = self.ser.read(toRead)
+        
+        # Reverse byte-stuffing
+        if b'\x7D\x5E' in raw:
+            raw = raw.replace(b'\x7D\x5E', b'\x7E')
+        if b'\x7D\x5D' in raw:
+            raw = raw.replace(b'\x7D\x5D', b'\x7D')
+        if b'\x7D\x31' in raw:
+            raw = raw.replace(b'\x7D\x31', b'\x11')
+        if b'\x7D\x33' in raw:
+            raw = raw.replace(b'\x7D\x33', b'\x13')
+        
+        # Discard header and tail
+        data = raw[5:-2]
+        # Unpack data
+        data = struct.unpack(">bbbbbbb", data)
+        firmware_version = str(data[0]) + "." + str(data[1])
+        return firmware_version
+    
     def close_port(self):
         self.ser.close()
