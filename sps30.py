@@ -58,10 +58,14 @@ class SPS30:
         raw = self.ser.read(toRead)
         
         # Reverse byte-stuffing
-        raw = raw.replace(b'\x7D\x5E', b'\x7E')
-        raw = raw.replace(b'\x7D\x31', b'\x11')
-        raw = raw.replace(b'\x7D\x33', b'\x13')
-        raw = raw.replace(b'\x7D\x5D', b'\x7D')
+        if b'\x7D\x5E' in raw:
+            raw = raw.replace(b'\x7D\x5E', b'\x7E')
+        if b'\x7D\x5D' in raw:
+            raw = raw.replace(b'\x7D\x5D', b'\x7D')
+        if b'\x7D\x31' in raw:
+            raw = raw.replace(b'\x7D\x31', b'\x11')
+        if b'\x7D\x33' in raw:
+            raw = raw.replace(b'\x7D\x33', b'\x13')
         
         # Discard header and tail
         rawData = raw[5:-2]
