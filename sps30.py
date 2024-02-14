@@ -32,6 +32,7 @@
         PM1, PM2.5, PM4 and PM10 are in ug/m^3, number concentrations are in #/cm^3
 """
 import serial, struct, time
+from sensirion_shdlc_driver.serial_frame_builder import ShdlcSerialMisoFrameBuilder
 from operator import invert
 
 class SPS30:
@@ -45,6 +46,18 @@ class SPS30:
     def stop(self):
         self.ser.write([0x7E, 0x00, 0x01, 0x00, 0xFE, 0x7E])
     
+    def monitor_values(self):
+        while True:
+            frame = ShdlcSerialMisoFrameBuilder()
+            while not frame.add_data(self.ser.read()):
+                pass
+            (address, command_id, state, payload) = frame.interpret_data()
+            print(f"CMD: {command_id}, STATE: {state}")
+            if command_id == 0x03 and state == 0x00:
+                break
+        payload = struct.unpack(">ffffffffff", payload)
+        return payload
+
     def read_values(self):
         self.ser.flushInput()
         # Ask for data
